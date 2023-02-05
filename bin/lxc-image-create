@@ -1,0 +1,83 @@
+source "$(dirname "$0")/../mod"
+
+execute() {
+    local container_name="$1"
+
+    if [ -z "$container_name" ]; then
+        System.die "Container name can not be null!"
+    fi
+
+    Container.Lxd.name "$container_name"
+
+    if ! `Container.Lxd.is_exist "$container_name"`; then
+        System.die "Container is not exist!"
+    fi
+
+    local distro_arch=""
+
+    declare -A distro_alias_map=(
+        ["debian/6"]="debian/squeeze"
+        ["debian/squeeze"]="debian/squeeze"
+        ["debian/5"]="debian/lenny"
+        ["debian/lenny"]="debian/lenny"
+    )
+
+    local distro="$2"
+    if [ -z "$distro" ]; then
+        System.die "Distro name can not be null!"
+    fi
+    if [ -z "${distro_alias_map[$distro]}" ]; then
+        System.die "Distro name is not a valid value!"
+    fi
+    local distro_name=${distro_alias_map[$distro]%/*}
+    local distro_ver=${distro_alias_map[$distro]#*/}
+
+    local distro_arch
+    if [ -z "$3" ] || [[ "$3" == "64" ]]; then
+        distro_arch="64"
+    elif [[ "$3" == "32" ]]; then
+        distro_arch="32"
+    else
+        System.die "Arch must be 32 or 64!"
+    fi
+
+    local temp_name
+    temp_name=`mktemp -d`
+    chmod 777 "$temp_name"
+    echo $temp_name
+    
+    lxc-temp-mount $container_name "$temp_name"
+    var mount_name="`Container.Lxd.find_mount_disk "$temp_name"`"
+    local target_path
+    target_path="`lxc config device get $container_name $mount_name path`"
+
+    case $distro_name in
+    debian)
+        lxc exec $container_name -- apt install -y debootstrap
+        lxc exec $container_name --cwd "$target_path" -- mkdir "$distro_ver"
+        if [[ "$distro_arch" == "32" ]]; then
+            lxc exec $container_name --cwd "$target_path" -- debootstrap --arch=i386 "$distro_ver" "$distro_ver" "http://mirrors.aliyun.com/debian-archive/debian"
+            echo "rootfs 32 bit"
+        else
+            lxc exec $container_name --cwd "$target_path" -- debootstrap --arch=amd64 "$distro_ver" "$distro_ver" "http://mirrors.aliyun.com/debian-archive/debian"
+        fi
+        lxc exec $container_name --cwd "$target_path" -- bash -c "echo -e 'auto eth0\nallow-hotplug eth0\niface eth0 inet dhcp' > '$distro_ver/etc/network/interfaces'"
+        lxc exec $container_name --cwd "$target_path" -- sed -i 's|pf::powerwait:/etc/init.d/powerfail start|pf::powerwait:/etc/init.d/rc 0|' "$distro_ver/etc/inittab"
+        lxc exec $container_name --cwd "$target_path" -- tar -cvzf rootfs.tar.gz -C "$distro_ver" .
+        ;;
+    esac
+
+    if [[ "$distro_arch" == "32" ]]; then
+        lxc exec $container_name --cwd "$target_path" -- bash -c "echo -e 'architecture: i686\ncreation_date: `date +%s`\nproperties:\n  architecture: i386\n  description: $distro_name $distro_ver i386\n  os: $distro_name\n  release: $distro_ver' > metadata.yaml"
+        echo "meta 32 bit"
+    else
+        lxc exec $container_name --cwd "$target_path" -- bash -c "echo -e 'architecture: x86_64\ncreation_date: `date +%s`\nproperties:\n  architecture: amd64\n  description: $distro_name $distro_ver amd64\n  os: $distro_name\n  release: $distro_ver' > metadata.yaml"
+    fi
+    lxc exec $container_name --cwd "$target_path" -- tar -czf metadata.tar.gz metadata.yaml
+
+    lxc image import "$temp_name/metadata.tar.gz" "$temp_name/rootfs.tar.gz" --alias $distro
+    
+    lxc exec $container_name --cwd "$target_path" -- rm -rf "$distro_ver" "metadata.tar.gz" "rootfs.tar.gz"
+    lxc-temp-umount $container_name "$temp_name"
+    rm -rf "$temp_name"
+}

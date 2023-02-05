@@ -1,0 +1,38 @@
+source "$(dirname "$0")/../mod"
+
+execute() {
+    local container_name="$1"
+
+    if [ -z "$container_name" ]; then
+        System.die "Container name can not be null!"
+    fi
+
+    Container.Lxd.name "$container_name"
+
+    if ! `Container.Lxd.is_exist "$container_name"`; then
+        System.die "Container is not exist!"
+    fi
+
+    local work_path="$2"
+    if [ -z "$work_path" ]; then
+        work_path="`pwd`"
+    fi
+    
+    if `Container.Lxd.is_mount_disk "$work_path"`; then
+        var mount_name="`Container.Lxd.find_mount_disk "$work_path"`"
+
+        local target_path
+        target_path="`lxc config device get $container_name $mount_name path`"
+        
+        local user_name
+        user_name="$(lxc exec $container_name -- grep :`id -u`: /etc/passwd | awk -F':' '{print $1}')"
+        
+        if [ -n "$user_name" ]; then
+            lxc exec $container_name -- su - "$user_name" -c "cd '$target_path' && \$SHELL"
+        else
+            lxc exec $container_name -- su - root -c "cd '$target_path' && \$SHELL"
+        fi
+    else
+        echo "$work_path has not been mounted!"
+    fi
+}

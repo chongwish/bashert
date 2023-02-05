@@ -1,0 +1,29 @@
+source "$(dirname "$0")/../mod"
+
+use CommandLine.Option [ get_options define_pair define_switch get_value is_on show_manual ]
+
+execute() {
+    define_switch \
+        -s/--status \
+        -h/--help:"Display the manual" \
+        -l:"List all things"
+
+    define_pair \
+        -a/--apple:"What color apple do you want?" \
+        -b/--banana \
+        -c/--cherry
+    
+    var apple="`get_value --apple`"
+    if [ -n "$apple" ]; then
+        echo "I want $apple apple!"
+    else
+        show_manual
+    fi
+
+    var status="`is_on --status`"
+    if [ -n "$status" ]; then
+        echo "OK"
+    else
+        echo "NO"
+    fi
+}

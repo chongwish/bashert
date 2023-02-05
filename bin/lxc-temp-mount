@@ -1,0 +1,27 @@
+source "$(dirname "$0")/../mod"
+
+execute() {
+    local container_name="$1"
+
+    if [ -z "$container_name" ]; then
+        System.die "Container name can not be null!"
+    fi
+
+    Container.Lxd.name "$container_name"
+
+    if ! `Container.Lxd.is_exist "$container_name"`; then
+        System.die "Container is not exist!"
+    fi
+
+    local work_path="$2"
+    if [ -z "$work_path" ]; then
+        work_path="`pwd`"
+    fi
+
+    if `Container.Lxd.is_mount_disk "$work_path"`; then
+        echo "$work_path has been mounted!"
+    else
+        local temp_name="temp-directory-`date +%s`"
+        lxc config device add $container_name "$temp_name" disk source="$work_path" path="/mnt/$temp_name"
+    fi
+}

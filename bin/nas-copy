@@ -1,0 +1,27 @@
+source "$(dirname "$0")/../mod"
+
+BASHERT_NAS_COPY_SYNC_LIST="${BASHERT_NAS_COPY_SYNC_LIST:-$HOME/.cache/bashert-nas-copy-sync-list}"
+BASHERT_NAS_COPY_DEST_PREFIX="${BASHERT_NAS_COPY_DEST_PREFIX:-/mnt/Data}"
+BASHERT_NAS_SYNC_DEST_PREFIX="${BASHERT_NAS_SYNC_DEST_PREFIX:-/mnt/Storage/Backup}"
+
+execute() {
+    if ! [ $# -eq 2 ]; then
+        System.die "Only support two argument."
+    fi
+
+    local src="$1"
+    File.has "$src"
+
+    if [[ "$1" == */ ]]; then
+        src=${src::-1}
+    fi
+
+    File.file_exist_in "$2" "$BASHERT_NAS_COPY_DEST_PREFIX"
+    mkdir -p "$2"
+
+    local datetime="`date "+%D %T"`"
+
+    File.copy "$src" "$2"
+
+    echo "[$datetime - `date +%T]` => $2/`basename "$1"`" >> "$BASHERT_NAS_COPY_SYNC_LIST"
+}

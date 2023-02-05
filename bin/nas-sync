@@ -1,0 +1,30 @@
+source "$(dirname "$0")/../mod"
+
+BASHERT_NAS_COPY_SYNC_LIST="${BASHERT_NAS_COPY_SYNC_LIST:-$HOME/.cache/bashert-nas-copy-sync-list}"
+BASHERT_NAS_COPY_DEST_PREFIX="${BASHERT_NAS_COPY_DEST_PREFIX:-/mnt/Data}"
+BASHERT_NAS_SYNC_DEST_PREFIX="${BASHERT_NAS_SYNC_DEST_PREFIX:-/mnt/Storage/Backup}"
+
+execute() {
+    if ! [ -f "$BASHERT_NAS_COPY_SYNC_LIST" ];
+        then exit 0;
+    fi
+
+    local line
+    grep -Env "(^# |^$)" "$BASHERT_NAS_COPY_SYNC_LIST" | while read line; do
+        local n=${line%%:*}
+        local src="${line#*=> }"
+
+        File.file_exist_in "$src" "$BASHERT_NAS_COPY_DEST_PREFIX"
+
+        local dest="${src/$BASHERT_NAS_COPY_DEST_PREFIX/$BASHERT_NAS_SYNC_DEST_PREFIX}"
+        dest="`dirname "$dest"`"
+        mkdir -p "$dest"
+
+        local datetime="`date "+%D %T"`"
+
+        File.copy "$src" "$dest"
+
+        datetime=" <= [$datetime - `date +%T`]"
+        sed -ri "$n"'s|(.*)|# \1'"${datetime}"'|' "$BASHERT_NAS_COPY_SYNC_LIST"
+    done
+}

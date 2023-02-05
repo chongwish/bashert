@@ -1,0 +1,19 @@
+source "$(dirname "$0")/../mod"
+
+execute() {
+    local container_name="$1"
+
+    if [ -z "$container_name" ]; then
+        System.die "Container name can not be null!"
+    fi
+
+    Container.Lxd.name "$container_name"
+    Container.Lxd.Desktop.owner "$LXDG_USER"
+
+    if ! `Container.Lxd.is_exist "$container_name"`; then
+        System.die "Container is not exist!"
+    fi
+
+    Container.Lxd.Desktop.init
+    Container.Lxd.restart
+}

@@ -1,0 +1,24 @@
+source "$(dirname "$0")/../mod"
+
+execute() {
+    local image_name="$1"
+    local container_name="$2"
+    
+    if [ -z "$image_name" ]; then
+        System.die "Image name can not be null!"
+    fi
+    if [ -z "$container_name" ]; then
+        System.die "Container name can not be null!"
+    fi
+
+    Container.Lxd.name "$container_name"
+    Container.Lxd.Desktop.owner "$LXDG_USER"
+
+    lxc launch $image_name $container_name
+
+    Container.Lxd.sync_task
+
+    Container.Lxd.Desktop.init
+    Container.Lxd.restart
+}
+

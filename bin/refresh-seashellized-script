@@ -1,0 +1,16 @@
+source "$(dirname "$0")/../mod"
+
+execute() {
+    if [ -z "$1" ] || [ ! -d "$1" ]|| [ -z "$2" ] || [ ! -d "$2" ]; then
+        System.die "Please make sure $1 and $2 are a exist directory!"
+    fi
+
+    local i
+    ls "$2" | while read i; do
+        if [ -f "$2/$i" ] && [ -f "$1/$i" ]; then
+            MY_SHELL=bash seashellize "$1/$i" > "$2/$i"
+            chmod +x "$2/$i"
+            echo "Refresh $2/$i: done"
+        fi
+    done
+}
