@@ -9,6 +9,10 @@ bind_dev() {
     done
 }
 
-get_bind_lib_list() {
-    ldconfig -p | grep -Ei '(nvidia|libcuda)' | awk -F '=> ' '{print $2}' | sed -E 's|(/usr/lib64/(.*))|bind=\1:/usr/lib/x86_64-linux-gnu/\2 \\|g'
+get_bind_lib64_list() {
+    ldconfig -p | grep -Ei '(nvidia|libcuda)' | grep "lib64/" | awk -F '=> ' '{print $2}' | sed -E 's|(/usr/lib64/(.*))|--bind=\1:/usr/lib/x86_64-linux-gnu/\2 \\|g'
+}
+
+get_bind_lib32_list() {
+        ldconfig -p | grep -Ei '(nvidia|libcuda)' | grep "lib/" | awk -F '=> ' '{print $2}' | sed -E 's|(/usr/lib/(.*))|--bind=\1:/usr/lib/i386-linux-gnu/\2 \\|g'
 }
