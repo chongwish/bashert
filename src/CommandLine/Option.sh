@@ -43,7 +43,7 @@ generate_global_variable() {
     for i in "$@"; do
         if [[ "$i" == *:* ]]; then
             message=${i#*:}
-            i=${i%:*}
+            i=${i%%:*}
         fi
 
         eval "$manual_name"'[$i]="$message"'
