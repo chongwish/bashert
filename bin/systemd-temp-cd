@@ -1,0 +1,47 @@
+source "$(dirname "$0")/../mod"
+
+execute() {
+    CommandLine.Option.define_pair \
+        -M/--machine:"Container Name"
+
+    CommandLine.Option.define_others
+
+    var machine="`CommandLine.Option.get_value --machine`"
+    
+    if [ -z "$machine" ]; then
+        CommandLine.Option.show_manual
+    fi
+
+    var command_with_args=( "`CommandLine.Option.get_others`" )
+
+    local work_path="`pwd`"
+
+    if [ ! -d "${command_with_args[0]}" ]; then
+        System.die "Path: \"${command_with_args[0]}\" isn't exist!"
+    fi
+
+    if [ "${#command_with_args[@]}" -eq 1 ]; then
+        work_path="`File.get_absolute_path "${command_with_args[0]}"`"
+    fi
+
+    if [ "${#command_with_args[@]}" -gt 1 ]; then
+        CommandLine.Option.show_manual
+    fi
+
+    Container.Nspawn.name "$machine"
+
+    var mount_name="`Container.Nspawn.find_mount_disk "$work_path"`"
+
+    if [ -z "$mount_name" ]; then
+        System.die "Path: \"$work_path\" has not been mounted!"
+    else
+        local user_name
+        user_name="$(Container.Nspawn.exec_command "grep :`id -u`: /etc/passwd" | awk -F':' '{print $1}')"
+        
+        if [ -n "$user_name" ]; then
+            machinectl shell "$machine" /usr/bin/su - "$user_name" -c "cd '$mount_name' && \$SHELL"
+        else
+            machinectl shell "$machine" /usr/bin/su - root -c "cd '$mount_name' && \$SHELL"
+        fi
+    fi
+}
