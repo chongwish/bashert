@@ -1,0 +1,105 @@
+source "$(dirname "$0")/../mod"
+
+use CommandLine.Option [ get_options define_pair define_switch get_value is_on show_manual ]
+
+execute() {
+    define_pair \
+        -D:"Container Path" \
+        --ipvlan:"IPVlan setting, like 'eth0:ipvlan11:192.168.1.11'" \
+        --bind-home:"Binding directory as container home"
+
+    define_switch \
+        --super:"High Privilege Container" \
+        --bind-xdg-dir:"Binding current user xdg directory to Container" \
+        --bind-ro-xdg-runtime:"Binding /run/user/id" \
+        --bind-ro-xorg:"Binding X11 Socket" \
+        --bind-ro-dbus:"Binding User Dbus" \
+        --bind-ro-pulse:"Binding Pulseaudio"
+    
+    var container_path="`get_value -D`"
+    var ipvlan_entry="`get_value --ipvlan`"
+    var container_home_path="`get_value --bind-home`"
+
+    var has_xdg_dir="`is_on --bind-xdg-dir`"
+    var has_super="`is_on --super`"
+    var has_xdg_runtime="`is_on --bind-ro-xdg-runtime`"
+    var has_xorg="`is_on --bind-ro-xorg`"
+    var has_dbus="`is_on --bind-ro-dbus`"
+    var has_pulse="`is_on --bind-ro-pulse`"
+
+    local args
+    local cmd
+
+    cmd="systemd-nspawn"
+    args="-b"
+
+    if [ ! -d "$container_path" ]; then
+        System.die "Container path must be a valid directory!"
+    fi
+    container_path="`File.get_absolute_path "$container_path"`"
+    args="$args -D \"$container_path\""
+
+    if [ -n "$container_home_path" ]; then
+        if [ ! -d "$container_home_path" ]; then
+            System.die "Container home path must be a valid directory!"
+        fi
+        container_home_path="`File.get_absolute_path "$container_home_path"`"
+        args="$args --bind \"$container_home_path\":/home"
+    fi
+
+    local network_device
+    local ipvlan_device
+    local ip_address
+    local gateway_address
+
+    if [ -n "$ipvlan_entry" ]; then
+        if [[ ! "$ipvlan_entry" =~ .*:.*:.* ]]; then
+            System.die "Option ipvlan: $ipvlan_entry is not a valid value!"
+        fi
+
+        network_device="${ipvlan_entry%%:*}"
+        ipvlan_entry="${ipvlan_entry#*:}"
+        ipvlan_device="${ipvlan_entry%%:*}"
+        ip_address="${ipvlan_entry#*:}"
+        gateway_address="${ip_address%.*}.1"
+
+        if [ -z "$network_device" -o -z "$ipvlan_device" -o -z "$ip_address" ]; then
+            System.die "Option ipvlan has a null value!"
+        fi
+
+        if ! ip l show "$ipvlan_device" &> /dev/null; then
+            sudo ip l add "$ipvlan_device" link "$network_device" type ipvlan
+            sudo ip l set "$ipvlan_device" up
+        fi
+
+        sudo $SHELL -c "echo '[Match]\nName=iv-*\n\n[Network]\nAddress=$ip_address/24\nGateway=$gateway_address' > \"$container_path/etc/systemd/network/ipvlan.network\""
+        args="$args --network-ipvlan=$ipvlan_device"
+    fi
+
+    if [ -n "$has_super" ]; then
+        args="$args --capability=all"
+        cmd="SYSTEMD_SECCOMP=0 $cmd"
+    fi
+
+    if [ -n "$has_xdg_dir" ]; then
+        args="$args --bind=$HOME/Desktop --bind=$HOME/Documents --bind=$HOME/Downloads --bind=$HOME/Music --bind=$HOME/Pictures --bind=$HOME/Public --bind=$HOME/Templates --bind=$HOME/Videos"
+    fi
+
+    if [ -n "$has_xdg_runtime" ]; then
+        args="$args --bind-ro=/run/user/`id -u`"
+    fi
+
+    if [ -n "$has_xorg" ]; then
+        args="$args --bind-ro=/tmp/.X11-unix --bind-ro=/dev/dri --bind-ro=/dev/shm"
+    fi
+
+    if [ -n "$has_dbus" ]; then
+        args="$args --bind-ro=/run/user/`id -u`/bus:$HOME/.bus"
+    fi
+
+    if [ -n "$has_pulse" ]; then
+        args="$args --bind-ro=/run/user/`id -u`/pulse/native:$HOME/.pulse-native"
+    fi
+
+    sudo $SHELL -c "$cmd $args"
+}
