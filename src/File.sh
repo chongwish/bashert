@@ -45,3 +45,22 @@ get_absolute_path() {
         echo $(cd "$1" 2>&1 && pwd -P)
     fi
 }
+
+locate_disk_path() {
+    local dir_path_name="$1"
+    local disk_name
+
+    while ! findmnt -ln "$dir_path_name" > /dev/null; do
+        dir_path_name="`dirname "$dir_path_name"`"
+    done
+
+    disk_name="`findmnt -lvn -o SOURCE "$dir_path_name"`"
+
+    dir_path_name="${1/$dir_path_name/}"
+
+    if [[ ! "$dir_path_name" =~ ^/.*$ ]]; then
+        dir_path_name="/$dir_path_name"
+    fi
+
+    ret "$disk_name:$dir_path_name"
+}
