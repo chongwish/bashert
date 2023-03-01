@@ -1,0 +1,17 @@
+source "$(dirname "$0")/../mod"
+
+execute() {
+    local machine="look"
+    declare -A themes=()
+
+
+    for i in $(machinectl shell -q `whoami`@"$machine" /bin/ls .style/xfce4); do
+        themes[$(echo "$i" | sed `printf 's/\r//g'`)]=1
+    done
+
+    if [ ! 1 -eq "$#" ] || [ -z ${themes["${1:-.}"]} ]; then
+        System.die "Select one of [${!themes[@]}] please!"
+    fi
+
+    machinectl shell -q `whoami`@"$machine" /bin/ln -sfn "$HOME/.style/xfce4/$1" "$HOME/.config/xfce4"
+}

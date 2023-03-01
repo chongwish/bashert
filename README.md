@@ -81,25 +81,25 @@ lxcg-nvidia-container debian-11
 Just like the `mount` & `umount` command, we can share the current directory to container:
 
 ```bash
-lxc-temp-mount
+lxc-temp-mount debian-11
 ```
 
 We also can mount some directory we want to:
 
 ```bash
-lxc-temp-mount Documents/Share
+lxc-temp-mount debian-11 Documents/Share
 ```
 
 And we can go to the directory in the container we mount:
 
 ```bash
-lxc-temp-cd Documents/Share
+lxc-temp-cd debian-11 Documents/Share
 ```
 
 We umount them if them are useless:
 
 ```bash
-lxc-temp-umount Document/Share
+lxc-temp-umount debian-11 Document/Share
 ```
 
 ### Create a lxd image
@@ -122,6 +122,45 @@ The nvidia device in `/dev` will be only existed when you have started xorg serv
 
 ```bash
 systemdg-run --machine debian-11 --nvidia firefox
+```
+
+### Share file in systemd-nspawn
+
+Here we can casually share the current directory between host and container:
+
+```bash
+systemd-temp-bind -M debian-11
+```
+
+Then we can get into this directory in the container:
+
+```bash
+systemd-temp-cd -M debian-11
+```
+
+When we finish work, we can stop the share:
+
+```bash
+systemd-temp-unbind --machine debian-11
+```
+
+Similarly, sharing the other directory only needs a path:
+
+```bash
+systemd-temp-bind -M debian-11 Documents/Share
+systemd-temp-cd -M debian-11 Document/Share
+systemd-temp-unbind -M debian-11 Document/Share
+```
+
+### Boot a configured systemd-nspawn container
+
+To run the nspawn container that is not in the `/var/lib/machine`, and configure its networks(Host/Ipvlan) and servers(Video/Audio/Share):
+
+```bash
+nspawn-boot \
+    --ipvlan eth0:ipvlan17:192.168.1.17 \
+    -D /mnt/Network/VMs/k8s \
+    --super
 ```
 
 ### Refresh my script
