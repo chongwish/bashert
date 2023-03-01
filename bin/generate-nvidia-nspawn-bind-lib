@@ -1,5 +1,6 @@
 source "$(dirname "$0")/../mod"
 
 execute() {
-    Container.Nspawn.Nvidia.get_bind_lib_list
+    Container.Nspawn.Nvidia.get_bind_lib64_list
+    Container.Nspawn.Nvidia.get_bind_lib32_list
 }
