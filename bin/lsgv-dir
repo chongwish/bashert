@@ -4,7 +4,7 @@ execute() {
     CommandLine.Option.define_pair \
         -s/--style:"Style File"
 
-    var style="`Commandline.Option.get_value --style`"
+    var style="`CommandLine.Option.get_value --style`"
 
     File.has_directory "$1"
 
