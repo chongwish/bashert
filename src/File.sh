@@ -75,6 +75,7 @@ walk() {
     fi
 }
 
-find_and_process() {
-    find "$1" -iname "$2" -exec $3 {} \;
+walk_with_program() {
+    local target_path="$1"; shift
+    find "$target_path" -exec $* {} \;
 }
