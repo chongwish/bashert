@@ -64,3 +64,17 @@ locate_disk_path() {
 
     ret "$disk_name:$dir_path_name"
 }
+
+walk() {
+    if [ -d "$2" ]; then
+        ls "$2" | while read file_name; do
+            walk $1 "`get_absolute_path "$2/$file_name"`"
+        done
+    else
+        $1 "$2"
+    fi
+}
+
+find_and_process() {
+    find "$1" -iname "$2" -exec $3 {} \;
+}
