@@ -1,0 +1,18 @@
+source "$(dirname "$0")/../mod"
+
+process() {
+    local dir_path="`dirname "$1"`"
+    local base_name="`basename "$1"`"
+    local ext_name="${file_name##*.}"
+    local file_name="${file_name%.*}"
+
+    if [[ "$ext_name" == "lsgv" ]]; then
+        lsgv "$1" > "$dir_path/$file_name.dot"
+        dot -Tsvg "$dir_path/$file_name.dot" > "$dir_path/$file_name.svg"
+    fi
+}
+
+execute() {
+    File.has "$1"
+    File.walk process "$1"
+}
