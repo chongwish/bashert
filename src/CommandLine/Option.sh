@@ -70,6 +70,10 @@ get_options() {
 }
 
 get_others() {
+    if ! $_BASHERT_GLOBAL_COMMANDLINE_OPTION_STATUS; then
+        var options=( "`get_options`" )
+        parse_option "${options[@]}"
+    fi
     ret ( "${_BASHERT_GLOBAL_COMMANDLINE_OPTION_OTHER_VALUE_LIST[@]}" )
 }
 
