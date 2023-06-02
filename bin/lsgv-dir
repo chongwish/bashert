@@ -2,16 +2,27 @@ source "$(dirname "$0")/../mod"
 
 execute() {
     CommandLine.Option.define_pair \
-        -s/--style:"Style File"
+        -s/--style:"Style File" \
+        -f/--format:"Generate File Format"
 
     var style="`CommandLine.Option.get_value --style`"
+    var format="`CommandLine.Option.get_value --format`"
+
+    local cmd="lsg-to-"
+    if [ -n "$format" ]; then
+        if [[ "png" != "$format" ]] && [[ "svg" != "$format" ]]; then
+            show_manual
+        fi
+    else
+        format="png"
+    fi
 
     File.has_directory "$1"
 
     if [ -n "$style" ]; then
         File.has "$style"
-        File.walk_with_program "$1" lsgv-to-svg "$style"
+        File.walk_with_program "$1" lsgv-to-image -f $format "$style"
     else
-        File.walk_with_program "$1" lsgv-to-svg
+        File.walk_with_program "$1" lsgv-to-image -f $format
     fi
 }

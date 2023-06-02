@@ -1,0 +1,41 @@
+source "$(dirname "$0")/../mod"
+
+use CommandLine.Option [ get_options define_pair define_switch define_others get_value is_on show_manual ]
+
+execute() {
+    define_pair \
+        -f/--format:"Generated File Format [svg|png]"
+
+    define_switch \
+        -k/--keep-dot:"Keep Generated Dot File"
+
+    define_others
+
+    var format="`get_value -f`"
+    var is_keep="`is_on --keep-dot`"
+    var command_with_args=( "`CommandLine.Option.get_others`" )
+
+    if [ -n "$format" ]; then
+        if [[ "$format" != "png" ]] && [[ "$format" != "svg" ]]; then
+            show_manual
+        fi        
+    else
+        format="png"
+    fi
+
+    local file="${command_with_args[-1]}"
+    File.has "$file"
+
+    local dir_path="`dirname "$file"`"
+    local base_name="`basename "$file"`"
+    local ext_name="${base_name##*.}"
+    local file_name="${base_name%.*}"
+
+    if [[ "$ext_name" == "lsgv" ]]; then
+        lsgv "${command_with_args[*]}" > "$dir_path/$file_name.dot"
+        dot -T$format "$dir_path/$file_name.dot" > "$dir_path/$file_name.$format"
+        if [ -z "$is_keep" ]; then
+            rm "$dir_path/$file_name.dot"
+        fi
+    fi
+}
