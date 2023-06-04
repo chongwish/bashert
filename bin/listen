@@ -1,0 +1,29 @@
+source "$(dirname "$0")/../mod"
+
+use CommandLine.Option [ get_options define_pair define_switch define_others get_value is_on show_manual ]
+
+execute() {
+    define_pair \
+        -e/--event:"Event of inotify-tools, default event is modify" \
+        -f/--file:"Listen file"
+
+    define_others
+
+    var event="`get_value -e`"
+    var file="`get_value -f`"
+    var command=( "`CommandLine.Option.get_others`" )
+
+    if [ -n "$file" ]; then
+        File.has "$file"
+    else
+        show_manual
+    fi
+
+    if [ -z "$event" ]; then
+        event="modify"
+    fi
+
+    while inotifywait -e "$event" "$file"; do
+        ${command[@]}
+    done
+}
