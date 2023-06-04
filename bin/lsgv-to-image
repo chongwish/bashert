@@ -32,7 +32,7 @@ execute() {
     local file_name="${base_name%.*}"
 
     if [[ "$ext_name" == "lsgv" ]]; then
-        lsgv "${command_with_args[*]}" > "$dir_path/$file_name.dot"
+        lsgv "${command_with_args[@]}" > "$dir_path/$file_name.dot"
         dot -T$format "$dir_path/$file_name.dot" > "$dir_path/$file_name.$format"
         if [ -z "$is_keep" ]; then
             rm "$dir_path/$file_name.dot"
