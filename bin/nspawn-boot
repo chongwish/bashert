@@ -15,7 +15,8 @@ execute() {
         --bind-ro-xorg:"Binding X11 Socket" \
         --bind-ro-dbus:"Binding User Dbus" \
         --bind-ro-pulse:"Binding Pulseaudio" \
-        --nvidia:"Nvidia Video Card"
+        --nvidia:"Nvidia Video Card" \
+	-h/--help:"Show Manual"
     
     var container_path="`get_value -D`"
     var ipvlan_entry="`get_value --ipvlan`"
@@ -28,6 +29,11 @@ execute() {
     var has_dbus="`is_on --bind-ro-dbus`"
     var has_pulse="`is_on --bind-ro-pulse`"
     var is_nvidia="`is_on --nvidia`"
+    var help="`is_on --help`"
+
+    if [ -n "$help" ]; then
+        show_manual
+    fi
 
     local args
     local cmd
