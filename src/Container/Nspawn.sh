@@ -26,11 +26,18 @@ is_mounted() {
     return 1
 }
 
+is_disk_mounted() {
+    if [ -n "`exec_command "findmnt -ln -o 'TARGET' '$1'"`" ]; then
+        return 0;
+    fi
+    return 1
+}
+
 exec_command() {
     machinectl shell -q $BASHERT_CONTAINER_NSPAWN_NAME /bin/sh -c "$@"
 }
 
-find_mount_disk() {
+find_disk_mounted() {
     has_name
 
     var disk_path="`File.locate_disk_path "$1"`"

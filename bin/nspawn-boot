@@ -104,11 +104,8 @@ execute() {
     fi
 
     if [ -n "$is_nvidia" ]; then
-        local nvidia_config_list="`Container.Nspawn.Nvidia.get_bind_config_list | tr -d '\n\\'`"
-        local nvidia_dev_list="`Container.Nspawn.Nvidia.get_bind_dev_list | tr -d '\n\\'`"
-        local nvidia_lib32_list="`Container.Nspawn.Nvidia.get_bind_lib32_list | tr -d '\n\\'`"
-        local nvidia_lib64_list="`Container.Nspawn.Nvidia.get_bind_lib64_list | tr -d '\n\\'`"
-        args="$args $nvidia_config_list $nvidia_dev_list $nvidia_lib32_list $nvidia_lib64_list"
+        local nvidia_list="`Container.Nspawn.Nvidia.get_bind_list`"
+        args="$args $nvidia_list"
     fi
 
     sudo $SHELL -c "$cmd $args"

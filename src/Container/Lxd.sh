@@ -129,7 +129,7 @@ is_device_exist() {
     return 1
 }
 
-is_mount_disk() {
+is_disk_mounted() {
     has_name
 
     local file_path
@@ -141,7 +141,7 @@ is_mount_disk() {
     return 1
 }
 
-find_mount_disk() {
+find_disk_mounted() {
     has_name
 
     for i in `lxc config device list $BASHERT_CONTAINER_LXD_NAME`; do

@@ -30,7 +30,7 @@ execute() {
 
     Container.Nspawn.name "$machine"
 
-    var mount_name="`Container.Nspawn.find_mount_disk "$work_path"`"
+    var mount_name="`Container.Nspawn.find_disk_mounted "$work_path"`"
 
     if [ -n "$mount_name" ]; then
         System.die "Path: \"$work_path\" has been mounted!"

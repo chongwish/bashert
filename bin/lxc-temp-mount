@@ -18,7 +18,7 @@ execute() {
         work_path="`pwd`"
     fi
 
-    if `Container.Lxd.is_mount_disk "$work_path"`; then
+    if `Container.Lxd.is_disk_mounted "$work_path"`; then
         echo "$work_path has been mounted!"
     else
         local temp_name="temp-directory-`date +%s`"

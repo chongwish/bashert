@@ -47,7 +47,7 @@ execute() {
     echo $temp_name
     
     lxc-temp-mount $container_name "$temp_name"
-    var mount_name="`Container.Lxd.find_mount_disk "$temp_name"`"
+    var mount_name="`Container.Lxd.find_disk_mounted "$temp_name"`"
     local target_path
     target_path="`lxc config device get $container_name $mount_name path`"
 

@@ -24,8 +24,11 @@ execute() {
     Container.Nspawn.name $machine
 
     var is_nvidia="`CommandLine.Option.is_on --nvidia`"
+
     if [ -n "$is_nvidia" ]; then
-        Container.Nspawn.Nvidia.bind_dev
+        if ! `Container.Nspawn.is_disk_mounted "/dev/nvidia0"`; then
+            Container.Nspawn.Nvidia.bind
+        fi
     fi
 
     Container.Nspawn.Desktop.run "${command_with_args[@]}"

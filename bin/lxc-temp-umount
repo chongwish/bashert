@@ -18,8 +18,8 @@ execute() {
         work_path="`pwd`"
     fi
 
-    if `Container.Lxd.is_mount_disk "$work_path"`; then
-        var mount_name="`Container.Lxd.find_mount_disk "$work_path"`"
+    if `Container.Lxd.is_disk_mounted "$work_path"`; then
+        var mount_name="`Container.Lxd.find_disk_mounted "$work_path"`"
         lxc config device remove $container_name "$mount_name"
     else
         echo "$work_path has not been mounted!"
