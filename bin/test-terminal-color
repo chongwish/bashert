@@ -1,0 +1,18 @@
+source "$(dirname "$0")/../mod"
+
+execute() {
+    CommandLine.Option.define_switch \
+        -l/--line:"Print a line" \
+        -n/--number:"Print color id"
+
+    var l="`CommandLine.Option.is_on -l`"
+    var n="`CommandLine.Option.is_on -n`"
+
+    if [ -n "$l" ]; then
+        Misc.Color.print_truecolor_line
+    fi
+
+    if [ -n "$n" ]; then
+        Misc.Color.print_256color_number
+    fi
+}
