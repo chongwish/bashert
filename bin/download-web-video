@@ -1,0 +1,45 @@
+source "$(dirname "$0")/../mod"
+
+use CommandLine.Option [ get_options define_pair define_switch define_others get_value is_on show_manual ]
+
+execute() {
+    define_pair \
+        -v/--video:"Video format" \
+        -f/--fps:"Video FPS" \
+        -a/--audio:"Audio format"
+
+    define_switch \
+        -p/--proxy:"Enable \$BASHERT_PROXY environment variable" \
+        -h/--help:"Show Manual"
+
+    var v="`get_value -v`"
+    var f="`get_value -f`"
+    var a="`get_value -a`"
+
+    var p="`is_on -p`"
+    var h="`is_on -h`"
+
+    if [ -n "$h" ]; then
+        show_manual
+    fi
+
+    if [ -z "$v" ]; then
+        v="[vcodec^=avc1]"
+    fi
+
+    if [ -z "$f" ]; then
+        f=60
+    fi
+    v="$v[fps<=$f]"
+
+    if [ -z "$a" ]; then
+        a="[ext=m4a]"
+    fi
+
+    if [ -n "$p" ]; then
+        yt-dlp --proxy $BASHERT_PROXY -f "bv$v+ba$a"
+    else
+        echo "bv$v+ba$a"
+        yt-dlp -f "bv$v+ba$a"
+    fi
+}
