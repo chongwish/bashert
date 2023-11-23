@@ -7,9 +7,16 @@ execute() {
         -f/--format:"Generated File Format [svg|png]"
 
     define_switch \
-        -k/--keep-dot:"Keep Generated Dot File"
+        -k/--keep-dot:"Keep Generated Dot File" \
+        -h/--help:"Show manual"
 
     define_others
+
+    var h="`CommandLine.Option.is_on -h`"
+
+    if [ -n "$h" ]; then
+        CommandLine.Option.show_manual
+    fi
 
     var format="`get_value -f`"
     var is_keep="`is_on --keep-dot`"

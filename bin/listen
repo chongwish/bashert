@@ -7,7 +7,16 @@ execute() {
         -e/--event:"Event of inotify-tools, default event is modify" \
         -f/--file:"Listen file"
 
+    define_switch \
+        -h/--help:"Show manual"
+
     define_others
+
+    var h="`is_on -h`"
+
+    if [ -n "$h" ]; then
+        show_manual
+    fi
 
     var event="`get_value -e`"
     var file="`get_value -f`"
