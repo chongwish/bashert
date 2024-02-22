@@ -5,9 +5,16 @@ execute() {
         -M/--machine:"Container Name"
 
     CommandLine.Option.define_switch \
-        --nvidia:"Nvidia Video Card"
+        --nvidia:"Nvidia Video Card" \
+        -h/--help:"Show manual"
 
     CommandLine.Option.define_others
+
+    var h="`CommandLine.Option.is_on -h`"
+
+    if [ -n "$h" ]; then
+        CommandLine.Option.show_manual
+    fi
 
     var machine="`CommandLine.Option.get_value --machine`"
     

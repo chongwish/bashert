@@ -1,0 +1,43 @@
+source "$(dirname "$0")/../mod"
+
+use CommandLine.Option [ define_pair define_switch define_others get_value is_on show_manual ]
+
+execute() {
+    define_pair \
+        -M/--machine:"Container Name"
+
+    define_switch \
+        -S/--setting:"Setting GUI" \
+        -h/--help:"Show manual"
+
+    var h="`is_on -h`"
+
+    if [ -n "$h" ]; then
+        show_manual
+    fi
+
+    var machine="`get_value -M`"
+    var is_setting="`is_on -S`"
+    
+    if [ -z "$machine" ]; then
+        machine="opentablet"
+    fi
+
+    local otd_command="otd-daemon"
+    if [ -n "$is_setting" ]; then
+        otd_command="otd-gui"
+    fi
+
+    Container.Nspawn.name $machine
+
+    Container.Nspawn.exec_command "chmod 660 /dev/uinput"
+
+    for i in /dev/hidraw*; do
+        if ! `Container.Nspawn.is_disk_mounted "$i"`; then
+            machinectl bind --mkdir $machine $i
+            Container.Nspawn.exec_command "chmod 660 $i"
+        fi
+    done
+
+    machinectl shell -q --uid="`id -u`" "$machine" /bin/sh -lc "DISPLAY=:0 /usr/bin/$otd_command"
+}
