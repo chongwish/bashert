@@ -12,7 +12,7 @@ execute() {
         --super:"High Privilege Container" \
         --bind-xdg-dir:"Binding current user xdg directory to Container" \
         --bind-ro-xdg-runtime:"Binding /run/user/id" \
-        --bind-xorg:"Binding X11 Socket" \
+        --bind-ro-xorg:"Binding X11 Socket" \
         --bind-ro-dbus:"Binding User Dbus" \
         --bind-ro-pulse:"Binding Pulseaudio" \
         --nvidia:"Nvidia Video Card" \
@@ -25,7 +25,7 @@ execute() {
     var has_xdg_dir="`is_on --bind-xdg-dir`"
     var has_super="`is_on --super`"
     var has_xdg_runtime="`is_on --bind-ro-xdg-runtime`"
-    var has_xorg="`is_on --bind-xorg`"
+    var has_xorg="`is_on --bind-ro-xorg`"
     var has_dbus="`is_on --bind-ro-dbus`"
     var has_pulse="`is_on --bind-ro-pulse`"
     var is_nvidia="`is_on --nvidia`"
@@ -98,7 +98,7 @@ execute() {
     fi
 
     if [ -n "$has_xorg" ]; then
-        args="$args --bind=/tmp/.X11-unix --bind=/dev/dri --bind=/dev/shm"
+        args="$args --bind-ro=/tmp/.X11-unix --bind-ro=/dev/dri --bind=/dev/shm"
     fi
 
     if [ -n "$has_dbus" ]; then

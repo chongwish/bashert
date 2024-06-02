@@ -16,17 +16,17 @@ bind() {
 
     for i in `get_dev_list` `get_lib64_list` `get_lib32_list` `get_config_list`; do
         local from="${i%%:*}"
-	local to="${i#*:}"
+	    local to="${i#*:}"
         machinectl bind --mkdir "$container_name" "$from" "$to"
     done
 }
 
 get_lib64_list() {
-    ldconfig -p | grep -Ei '(nvidia|libcuda)' | grep " /usr/lib64/" | awk -F '=> ' '{print $2}' | sed -E 's|(/usr/lib64/(.*))|\1:/usr/lib/x86_64-linux-gnu/\2|g'
+    ldconfig -p | grep -Ei '(nvidia|libnv|libcuda)' | grep " /usr/lib64/" | awk -F '=> ' '{print $2}' | sed -E 's|(/usr/lib64/(.*))|\1:/usr/lib/x86_64-linux-gnu/\2|g'
 }
 
 get_lib32_list() {
-    ldconfig -p | grep -Ei '(nvidia|libcuda)' | grep " /usr/lib/" | awk -F '=> ' '{print $2}' | sed -E 's|(/usr/lib/(.*))|\1:/usr/lib/i386-linux-gnu/\2|g'
+    ldconfig -p | grep -Ei '(nvidia|libnv|libcuda)' | grep " /usr/lib/" | awk -F '=> ' '{print $2}' | sed -E 's|(/usr/lib/(.*))|\1:/usr/lib/i386-linux-gnu/\2|g'
 }
 
 get_dev_list() {
@@ -45,7 +45,6 @@ get_config_list() {
     echo '/opt/bin/nvidia-debugdump:/usr/bin/nvidia-debugdump'
     echo '/usr/bin/nvidia-modprobe:/usr/bin/nvidia-modprobe'
     echo '/opt/bin/nvidia-ngx-updater:/usr/bin/nvidia-ngx-updater'
-    echo '/opt/bin/nvidia-powerd:/usr/bin/nvidia-powerd'
     echo '/usr/bin/nvidia-sleep.sh:/usr/bin/nvidia-sleep.sh'
     echo '/opt/bin/nvidia-smi:/usr/bin/nvidia-smi'
     echo '/usr/bin/nvidia-xconfig:/usr/bin/nvidia-xconfig'
