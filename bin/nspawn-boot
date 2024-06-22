@@ -128,5 +128,5 @@ execute() {
 
     
     echo "Execute: $cmd $args"
-    #sudo $SHELL -c "$cmd $args"
+    sudo $SHELL -c "$cmd $args"
 }
