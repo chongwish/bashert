@@ -9,12 +9,12 @@ execute() {
         -l:"List all things"
 
     define_pair \
-        -a/--apple:"What color apple do you want?" \
+      ! -a/--apple:"What color apple do you want?" \
         -b/--banana \
         -c/--cherry
 
     define_pairs \
-        -j/--join:"Join party" \
+      ! -j/--join:"Join party" \
         --add:"Add something"
 
     var joins=( "`get_values --join`" )

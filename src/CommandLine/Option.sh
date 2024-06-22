@@ -7,12 +7,15 @@
 
 # Define global variable
 declare -g _BASHERT_GLOBAL_COMMANDLINE_OPTION_STATUS=false
+
+declare -Ag _BASHERT_GLOBAL_COMMANDLINE_OPTION_MARK_MAP=()
+declare -Ag _BASHERT_GLOBAL_COMMANDLINE_OPTION_PARSER_VALUE_MARK_MAP=()
 # ([-args]="-args/--argument" [--argment]="-args/--argument")
 declare -Ag _BASHERT_GLOBAL_COMMANDLINE_OPTION_SWITCH_MAP=()
 declare -Ag _BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIR_MAP=()
 declare -Ag _BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIRS_MAP=()
 # ([-args/--argment]="$message")
-declare -Ag _BASHERT_GLOBAL_COMMANDLINE_OPTION_SWITCH_MANUAL_MAP=()
+declare -Ag _BASHERT_GLOBAL_COMMANDLINE_OPTION_SWITCH_MANUAL_MAP=([-?]="Show Manual")
 declare -Ag _BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIR_MANUAL_MAP=()
 declare -Ag _BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIRS_MANUAL_MAP=()
 # ([-args/--argument]="$value")
@@ -50,7 +53,14 @@ generate_global_variable() {
 
     local i
     local message
+    local mark
+    mark=false
     for i in "$@"; do
+        if [[ ":$i:" == ":!:" ]]; then
+            mark=true
+            continue
+        fi
+
         if [[ "$i" == *:* ]]; then
             message=${i#*:}
             i=${i%%:*}
@@ -68,7 +78,13 @@ generate_global_variable() {
         if [[ "$option_type" == "pairs" ]]; then
             _BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIRS_VALUE_MAP["$i"]=0
         fi
+
+        if $mark; then
+            _BASHERT_GLOBAL_COMMANDLINE_OPTION_MARK_MAP["$i"]="!"
+        fi
+
         message=""
+        mark=false
     done
 }
 
@@ -92,6 +108,10 @@ parse_option() {
     local pairs_index_name
 
     while [ $# -gt 0 ]; do
+        if [[ ":$1:" == ":-?:" ]]; then
+            show_manual
+        fi
+
         pairs_index_name="${_BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIRS_MAP[$1]}"
         pair_index_name="${_BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIR_MAP[$1]}"
         switch_index_name="${_BASHERT_GLOBAL_COMMANDLINE_OPTION_SWITCH_MAP[$1]}"
@@ -104,22 +124,30 @@ parse_option() {
             let n="$n + 1"
             _BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIRS_VALUE_MAP[$pairs_index_name]=$n
             if [ -z "$1" ]; then
-                show_manual
+                echo "Option[$pairs_index_name] need a valid value"
+                exit 0
             fi
 
             shift
+
+            _BASHERT_GLOBAL_COMMANDLINE_OPTION_PARSER_VALUE_MARK_MAP[$pairs_index_name]=1
         elif [ -n "$pair_index_name" ]; then
             # pair
             shift
             _BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIR_VALUE_MAP[$pair_index_name]="$1"
             if [ -z "$1" ]; then
-                show_manual
+                echo "Option[$pair_index_name] need a valid value"
+                exit 0
             fi 
             shift
+
+            _BASHERT_GLOBAL_COMMANDLINE_OPTION_PARSER_VALUE_MARK_MAP[$pair_index_name]=1
         elif [ -n "$switch_index_name" ]; then
             # switch
             shift
             _BASHERT_GLOBAL_COMMANDLINE_OPTION_SWITCH_VALUE_MAP[$switch_index_name]=1
+
+            _BASHERT_GLOBAL_COMMANDLINE_OPTION_PARSER_VALUE_MARK_MAP[$switch_index_name]=1
         else
             _BASHERT_GLOBAL_COMMANDLINE_OPTION_OTHER_VALUE_LIST+=("$1")
             shift
@@ -127,6 +155,13 @@ parse_option() {
     done
 
     _BASHERT_GLOBAL_COMMANDLINE_OPTION_STATUS=true
+
+    for key in "${!_BASHERT_GLOBAL_COMMANDLINE_OPTION_MARK_MAP[@]}"; do
+        if [[ -z "${_BASHERT_GLOBAL_COMMANDLINE_OPTION_PARSER_VALUE_MARK_MAP[$key]}" ]]; then
+            echo "Option[$key] is missing"
+            exit 0
+        fi
+    done
 }
 
 # CommandLine.Option.define_pairs -a/--apple -b/--banana -c/--cherry
@@ -206,19 +241,25 @@ show_manual() {
     local other_message=""
     if $_BASHERT_GLOBAL_COMMANDLINE_OPTION_HAS_OTHER; then other_message="others ..."; fi
     local message
+    local mark
     echo "Usage: `basename "${BASH_SOURCE[-1]}"` [option [argument]] $other_message"
     echo "Options:"
+
+    for i in "${!_BASHERT_GLOBAL_COMMANDLINE_OPTION_SWITCH_MANUAL_MAP[@]}"; do
+        message="${_BASHERT_GLOBAL_COMMANDLINE_OPTION_SWITCH_MANUAL_MAP[$i]}"
+        mark="${_BASHERT_GLOBAL_COMMANDLINE_OPTION_MARK_MAP[$i]}"
+        echo "    ${mark:- } $i${message:+: $message}"
+    done
     for i in "${!_BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIR_MANUAL_MAP[@]}"; do
         message="${_BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIR_MANUAL_MAP[$i]}"
-        echo "    $i ARGS${message:+: $message}"
+        mark="${_BASHERT_GLOBAL_COMMANDLINE_OPTION_MARK_MAP[$i]}"
+        echo "    ${mark:- } $i ARGS${message:+: $message}"
     done
     for i in "${!_BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIRS_MANUAL_MAP[@]}"; do
         message="${_BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIRS_MANUAL_MAP[$i]}"
-        echo "    $i ARGS${message:+: $message}"
+        mark="${_BASHERT_GLOBAL_COMMANDLINE_OPTION_MARK_MAP[$i]}"
+        echo "    ${mark:- } [$i ARGS]${message:+: $message}"
     done
-    for i in "${!_BASHERT_GLOBAL_COMMANDLINE_OPTION_SWITCH_MANUAL_MAP[@]}"; do
-        message="${_BASHERT_GLOBAL_COMMANDLINE_OPTION_SWITCH_MANUAL_MAP[$i]}"
-        echo "    $i${message:+: $message}"
-    done
+
     exit 0
 }
