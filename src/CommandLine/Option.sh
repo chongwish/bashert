@@ -10,12 +10,16 @@ declare -g _BASHERT_GLOBAL_COMMANDLINE_OPTION_STATUS=false
 # ([-args]="-args/--argument" [--argment]="-args/--argument")
 declare -Ag _BASHERT_GLOBAL_COMMANDLINE_OPTION_SWITCH_MAP=()
 declare -Ag _BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIR_MAP=()
+declare -Ag _BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIRS_MAP=()
 # ([-args/--argment]="$message")
 declare -Ag _BASHERT_GLOBAL_COMMANDLINE_OPTION_SWITCH_MANUAL_MAP=()
 declare -Ag _BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIR_MANUAL_MAP=()
+declare -Ag _BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIRS_MANUAL_MAP=()
 # ([-args/--argument]="$value")
 declare -Ag _BASHERT_GLOBAL_COMMANDLINE_OPTION_SWITCH_VALUE_MAP=()
 declare -Ag _BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIR_VALUE_MAP=()
+# ([-args/--argument]="$number", [-args/--argument,0]="$value")
+declare -Ag _BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIRS_VALUE_MAP=()
 
 declare -ag _BASHERT_GLOBAL_COMMANDLINE_OPTION_OTHER_VALUE_LIST=()
 
@@ -28,11 +32,17 @@ declare -g BASH_ARGV
 generate_global_variable() {
     local map_name
     local manual_name
-    if [[ "$1" == "pair" ]]; then
+    local option_type
+    option_type="$1"
+    if [[ "$option_type" == "pairs"  ]]; then
+        map_name=_BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIRS_MAP
+        manual_name=_BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIRS_MANUAL_MAP
+        shift
+    elif [[ "$option_type" == "pair" ]]; then
         map_name=_BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIR_MAP
         manual_name=_BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIR_MANUAL_MAP
         shift
-    elif [[ "$1" == "switch" ]]; then
+    elif [[ "$option_type" == "switch" ]]; then
         map_name=_BASHERT_GLOBAL_COMMANDLINE_OPTION_SWITCH_MAP
         manual_name=_BASHERT_GLOBAL_COMMANDLINE_OPTION_SWITCH_MANUAL_MAP
         shift
@@ -54,18 +64,16 @@ generate_global_variable() {
         else
             eval "$map_name"'[$i]="$i"'
         fi
+
+        if [[ "$option_type" == "pairs" ]]; then
+            _BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIRS_VALUE_MAP["$i"]=0
+        fi
         message=""
     done
 }
 
 # get the commandline argument
 get_options() {
-    #declare -a options=()
-    #local i
-    #for ((i=${#BASH_ARGV[@]}-1; i >= 0; i--)); do
-    #    options+=( "${BASH_ARGV[$i]}" )
-    #done
-    #ret ( "${options[@]}" )
     ret ( "${SEASHELL_COMMAND_LINE_ARGUMENT[@]}" )
 }
 
@@ -81,12 +89,26 @@ get_others() {
 parse_option() {
     local pair_index_name
     local swtich_index_name
+    local pairs_index_name
 
     while [ $# -gt 0 ]; do
+        pairs_index_name="${_BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIRS_MAP[$1]}"
         pair_index_name="${_BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIR_MAP[$1]}"
         switch_index_name="${_BASHERT_GLOBAL_COMMANDLINE_OPTION_SWITCH_MAP[$1]}"
 
-        if [ -n "$pair_index_name" ]; then
+        if [ -n "$pairs_index_name" ]; then
+            # pairs
+            shift
+            local n="${_BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIRS_VALUE_MAP[$pairs_index_name]}"
+            _BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIRS_VALUE_MAP["$pairs_index_name,$n"]="$1"
+            let n="$n + 1"
+            _BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIRS_VALUE_MAP[$pairs_index_name]=$n
+            if [ -z "$1" ]; then
+                show_manual
+            fi
+
+            shift
+        elif [ -n "$pair_index_name" ]; then
             # pair
             shift
             _BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIR_VALUE_MAP[$pair_index_name]="$1"
@@ -107,6 +129,12 @@ parse_option() {
     _BASHERT_GLOBAL_COMMANDLINE_OPTION_STATUS=true
 }
 
+# CommandLine.Option.define_pairs -a/--apple -b/--banana -c/--cherry
+# Define the commandline pairs argument
+define_pairs() {
+    generate_global_variable "pairs" "$@"
+}
+
 # CommandLine.Option.define_pair -a/--apple -b/--banana -c/--cherry
 # Define the commandline pair argument
 define_pair() {
@@ -122,6 +150,27 @@ define_switch() {
 # Define commandline has other argument
 define_others() {
     _BASHERT_GLOBAL_COMMANDLINE_OPTION_HAS_OTHER=true
+}
+
+# Get the commandline pairs value
+get_values() {
+    if ! $_BASHERT_GLOBAL_COMMANDLINE_OPTION_STATUS; then
+        var options=( "`get_options`" )
+        parse_option "${options[@]}"
+    fi
+
+    declare -a result=();
+
+    local key="${_BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIRS_MAP[$1]}"
+    if [ -n "$key" ]; then
+        local -i n
+        n="${_BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIRS_VALUE_MAP[$key]}"
+        for (( i=0; i < n; i++)); do
+            result[$i]="${_BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIRS_VALUE_MAP[$key,$i]}"
+        done
+    fi
+
+    ret ( "${result[@]}" )
 }
 
 # Get the commandline pair value
@@ -161,6 +210,10 @@ show_manual() {
     echo "Options:"
     for i in "${!_BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIR_MANUAL_MAP[@]}"; do
         message="${_BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIR_MANUAL_MAP[$i]}"
+        echo "    $i ARGS${message:+: $message}"
+    done
+    for i in "${!_BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIRS_MANUAL_MAP[@]}"; do
+        message="${_BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIRS_MANUAL_MAP[$i]}"
         echo "    $i ARGS${message:+: $message}"
     done
     for i in "${!_BASHERT_GLOBAL_COMMANDLINE_OPTION_SWITCH_MANUAL_MAP[@]}"; do

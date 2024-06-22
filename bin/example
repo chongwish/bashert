@@ -1,6 +1,6 @@
 source "$(dirname "$0")/../mod"
 
-use CommandLine.Option [ get_options define_pair define_switch get_value is_on show_manual ]
+use CommandLine.Option [ get_options define_pair define_pairs define_switch get_value get_values is_on show_manual ]
 
 execute() {
     define_switch \
@@ -12,6 +12,16 @@ execute() {
         -a/--apple:"What color apple do you want?" \
         -b/--banana \
         -c/--cherry
+
+    define_pairs \
+        -j/--join:"Join party" \
+        --add:"Add something"
+
+    var joins=( "`get_values --join`" )
+
+    for i in "${joins[@]}"; do
+        echo "Join $i"
+    done
     
     var apple="`get_value --apple`"
     if [ -n "$apple" ]; then
