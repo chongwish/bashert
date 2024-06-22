@@ -126,7 +126,6 @@ execute() {
         args="$args $nvidia_list"
     fi
 
-    
     echo "Execute: $cmd $args"
     sudo $SHELL -c "$cmd $args"
 }

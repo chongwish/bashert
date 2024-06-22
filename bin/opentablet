@@ -7,14 +7,7 @@ execute() {
         -M/--machine:"Container Name"
 
     define_switch \
-        -S/--setting:"Setting GUI" \
-        -h/--help:"Show manual"
-
-    var h="`is_on -h`"
-
-    if [ -n "$h" ]; then
-        show_manual
-    fi
+        -S/--setting:"Setting GUI"
 
     var machine="`get_value -M`"
     var is_setting="`is_on -S`"

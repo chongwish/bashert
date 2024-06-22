@@ -5,22 +5,13 @@ execute() {
         -s/--style:"Style File" \
         -f/--format:"Generate File Format"
 
-    CommandLine.Option.define_switch \
-        -h/--help:"Show manual"
-
-    var h="`CommandLine.Option.is_on -h`"
-
-    if [ -n "$h" ]; then
-        CommandLine.Option.show_manual
-    fi
-
     var style="`CommandLine.Option.get_value --style`"
     var format="`CommandLine.Option.get_value --format`"
 
     local cmd="lsg-to-"
     if [ -n "$format" ]; then
         if [[ "png" != "$format" ]] && [[ "svg" != "$format" ]]; then
-            show_manual
+            System.die "Only support png/svg"
         fi
     else
         format="png"

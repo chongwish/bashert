@@ -4,24 +4,20 @@ use CommandLine.Option [ get_options define_pair define_switch define_others get
 
 execute() {
     define_pair \
+      ! -u/--url:"Video address" \
         -v/--video:"Video format" \
         -f/--fps:"Video FPS" \
         -a/--audio:"Audio format"
 
     define_switch \
-        -p/--proxy:"Enable \$BASHERT_PROXY environment variable" \
-        -h/--help:"Show Manual"
+        -p/--proxy:"Enable \$BASHERT_PROXY environment variable"
 
     var v="`get_value -v`"
     var f="`get_value -f`"
     var a="`get_value -a`"
+    var u="`get_value -u`"
 
     var p="`is_on -p`"
-    var h="`is_on -h`"
-
-    if [ -n "$h" ]; then
-        show_manual
-    fi
 
     if [ -z "$v" ]; then
         v="[vcodec^=avc1]"
@@ -37,9 +33,9 @@ execute() {
     fi
 
     if [ -n "$p" ]; then
-        yt-dlp --proxy $BASHERT_PROXY -f "bv$v+ba$a"
+        echo "Downloading through proxy: $BASHERT_PROXY"
+        yt-dlp --proxy $BASHERT_PROXY -f "bv$v+ba$a" "$u"
     else
-        echo "bv$v+ba$a"
-        yt-dlp -f "bv$v+ba$a"
+        yt-dlp -f "bv$v+ba$a" "$u"
     fi
 }

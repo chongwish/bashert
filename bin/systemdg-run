@@ -2,30 +2,19 @@ source "$(dirname "$0")/../mod"
 
 execute() {
     CommandLine.Option.define_pair \
-        -M/--machine:"Container Name"
+      ! -M/--machine:"Container Name"
 
     CommandLine.Option.define_switch \
-        --nvidia:"Nvidia Video Card" \
-        -h/--help:"Show manual"
+        --nvidia:"Nvidia Video Card"
 
     CommandLine.Option.define_others
 
-    var h="`CommandLine.Option.is_on -h`"
-
-    if [ -n "$h" ]; then
-        CommandLine.Option.show_manual
-    fi
-
     var machine="`CommandLine.Option.get_value --machine`"
-    
-    if [ -z "$machine" ]; then
-        CommandLine.Option.show_manual
-    fi
     
     var command_with_args=( "`CommandLine.Option.get_others`" )
     
     if [ "${#command_with_args[@]}" -lt 1 ]; then
-        CommandLine.Option.show_manual
+        System.die "Need a command to execute"
     fi
 
     Container.Nspawn.name $machine

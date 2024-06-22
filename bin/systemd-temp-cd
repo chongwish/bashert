@@ -2,15 +2,11 @@ source "$(dirname "$0")/../mod"
 
 execute() {
     CommandLine.Option.define_pair \
-        -M/--machine:"Container Name"
+      ! -M/--machine:"Container Name"
 
     CommandLine.Option.define_others
 
     var machine="`CommandLine.Option.get_value --machine`"
-    
-    if [ -z "$machine" ]; then
-        CommandLine.Option.show_manual
-    fi
 
     var command_with_args=( "`CommandLine.Option.get_others`" )
 

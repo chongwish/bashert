@@ -7,16 +7,9 @@ execute() {
         -f/--format:"Generated File Format [svg|png]"
 
     define_switch \
-        -k/--keep-dot:"Keep Generated Dot File" \
-        -h/--help:"Show manual"
+        -k/--keep-dot:"Keep Generated Dot File"
 
     define_others
-
-    var h="`CommandLine.Option.is_on -h`"
-
-    if [ -n "$h" ]; then
-        CommandLine.Option.show_manual
-    fi
 
     var format="`get_value -f`"
     var is_keep="`is_on --keep-dot`"
@@ -24,7 +17,7 @@ execute() {
 
     if [ -n "$format" ]; then
         if [[ "$format" != "png" ]] && [[ "$format" != "svg" ]]; then
-            show_manual
+            System.die "Only support png/svg"
         fi        
     else
         format="png"
