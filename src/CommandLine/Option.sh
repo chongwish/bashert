@@ -15,7 +15,8 @@ declare -Ag _BASHERT_GLOBAL_COMMANDLINE_OPTION_SWITCH_MAP=()
 declare -Ag _BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIR_MAP=()
 declare -Ag _BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIRS_MAP=()
 # ([-args/--argment]="$message")
-declare -Ag _BASHERT_GLOBAL_COMMANDLINE_OPTION_SWITCH_MANUAL_MAP=([-?]="Show Manual")
+#declare -Ag _BASHERT_GLOBAL_COMMANDLINE_OPTION_SWITCH_MANUAL_MAP=([-?]="Show Manual")
+declare -Ag _BASHERT_GLOBAL_COMMANDLINE_OPTION_SWITCH_MANUAL_MAP=()
 declare -Ag _BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIR_MANUAL_MAP=()
 declare -Ag _BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIRS_MANUAL_MAP=()
 # ([-args/--argument]="$value")
@@ -242,7 +243,7 @@ show_manual() {
     if $_BASHERT_GLOBAL_COMMANDLINE_OPTION_HAS_OTHER; then other_message="others ..."; fi
     local message
     local mark
-    echo "Usage: `basename "${BASH_SOURCE[-1]}"` [option [argument]] $other_message"
+    echo "Usage: `basename "${BASH_SOURCE[-1]}"` [option [argument]] [-?] $other_message"
     echo "Options:"
 
     for i in "${!_BASHERT_GLOBAL_COMMANDLINE_OPTION_SWITCH_MANUAL_MAP[@]}"; do
@@ -253,12 +254,12 @@ show_manual() {
     for i in "${!_BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIR_MANUAL_MAP[@]}"; do
         message="${_BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIR_MANUAL_MAP[$i]}"
         mark="${_BASHERT_GLOBAL_COMMANDLINE_OPTION_MARK_MAP[$i]}"
-        echo "    ${mark:- } $i ARGS${message:+: $message}"
+        echo "    ${mark:- } $i argument${message:+: $message}"
     done
     for i in "${!_BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIRS_MANUAL_MAP[@]}"; do
         message="${_BASHERT_GLOBAL_COMMANDLINE_OPTION_PAIRS_MANUAL_MAP[$i]}"
         mark="${_BASHERT_GLOBAL_COMMANDLINE_OPTION_MARK_MAP[$i]}"
-        echo "    ${mark:- } [$i ARGS]${message:+: $message}"
+        echo "    ${mark:- } [$i argument]${message:+: $message}"
     done
 
     exit 0
