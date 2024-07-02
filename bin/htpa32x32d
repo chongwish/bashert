@@ -1,0 +1,74 @@
+source "$(dirname "$0")/../mod"
+
+vcmd() {
+    local value
+    exec 3<>$device
+    echo -n -e "VCMD=$1" >&3
+    read -u 3 value
+    echo $value
+    exec 3<&-
+}
+
+execute() {
+    CommandLine.Option.define_pair \
+      ! -d/--device:"Serial Device"
+
+    CommandLine.Option.define_switch \
+        -s/--status:"Device status" \
+        -r/--resolution:"Device resolution" \
+        -v/--version:"Firmware version" \
+        -S/--sensor:"Sensor Temperature" \
+        -A/--average:"Average Temperature" \
+        -M/--matrix:"Temperature array"
+
+    var device="`CommandLine.Option.get_value -d`"
+
+    var status="`CommandLine.Option.is_on -s`"
+    var resolution="`CommandLine.Option.is_on -r`"
+    var version="`CommandLine.Option.is_on -v`"
+    var sensor="`CommandLine.Option.is_on -S`"
+    var average="`CommandLine.Option.is_on -A`"
+    var matrix="`CommandLine.Option.is_on -M`"
+
+    if [ ! -c "$device" ]; then
+        System.die "Need a serial device!"
+    fi
+
+    stty -F $device 115200 cs8 -cstopb -parenb -echo time 10
+    
+    if [ -n "$status" ]; then
+        vcmd STA
+    fi
+
+    if [ -n "$resolution" ]; then
+        vcmd RES
+    fi
+
+    if [ -n "$version" ]; then
+        vcmd VER
+    fi
+
+    if [ -n "$sensor" ]; then
+        vcmd AMT
+    fi
+
+    if [ -n "$average" ]; then
+        vcmd TMP
+    fi
+
+    if [ -n "$matrix" ]; then
+        local value
+        exec 3<>$device
+        echo -n -e "VCMD=DAT" >&3
+        read -n 5 -r -u 3 value
+        for i in {0..31}; do
+            for j in {0..31}; do
+                read -n 2 -r -u 3 value
+                value=`echo -n $value | od -An -tu2 --endian=big | tr -d ' '`
+                echo -n -e "\\033[48;5;$((value/10))m$value \\033[0m"
+            done
+            echo ""
+        done
+        exec 3<&-
+    fi
+}
