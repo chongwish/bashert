@@ -1,0 +1,40 @@
+source "$(dirname "$0")/../mod"
+
+use CommandLine.Option [ get_options define_pair define_pairs define_switch get_value get_values is_on show_manual ]
+
+execute() {
+    define_pair \
+      ! -f/--from:"Website to download txt, like 'http://www.x.com/playlist.txt'" \
+      ! -t/--to:"Save to local file" \
+        -p/--proxy:"Proxy"
+
+    define_pairs \
+        -g/--group:"Group, like 'cctv' or '汕头'"
+
+    var proxy="`get_value -p`"
+    var to="`get_value -t`"
+    var from="`get_value -f`"
+    var group_list=( "`get_values -g`" )
+
+    local tmp_file
+    tmp_file=`mktemp`
+
+    local target_file
+    target_file="$to"
+
+    if [ -f "$target_file" ]; then
+        mv "$target_file" "${target_file}-`date +%s`"
+    fi
+
+    touch "$target_file"
+
+    http_proxy=$proxy https_proxy=$proxy curl -s "$from" > "$tmp_file"
+
+    for group in "${group_list[@]}"; do
+        echo "$group,#genre#" >> "$target_file"
+        cat "$tmp_file" | grep -i "^$group" >> "$target_file"
+        echo "" >> $target_file
+    done
+
+    rm $tmp_file
+}
