@@ -10,6 +10,7 @@ execute() {
 
     define_switch \
         --super:"High Privilege Container" \
+        -d:"Device and Daemon" \
         --bind-xdg-dir:"Binding current user xdg directory to Container" \
         --bind-ro-xdg-runtime:"Binding /run/user/id" \
         --bind-ro-xorg:"Binding X11 Socket" \
@@ -27,6 +28,7 @@ execute() {
 
     var has_xdg_dir="`is_on --bind-xdg-dir`"
     var has_super="`is_on --super`"
+    var has_d="`is_on -d`"
     var has_xdg_runtime="`is_on --bind-ro-xdg-runtime`"
     var has_xorg="`is_on --bind-ro-xorg`"
     var has_dbus="`is_on --bind-ro-dbus`"
@@ -36,11 +38,17 @@ execute() {
     var bind_path_list=( "`get_values --bind`" )
     var bind_ro_path_list=( "`get_values --bind-ro`" )
 
+    local daemon
     local args
     local cmd
 
     cmd="systemd-nspawn"
     args="-b"
+
+    if [ -n "$has_d" ]; then
+        daemon="systemd-run --working-directory=."
+        args="$args --property=DevicePolicy=auto --keep-unit"
+    fi
 
     if [ ! -d "$container_path" ]; then
         System.die "Container path must be a valid directory!"
@@ -85,7 +93,12 @@ execute() {
 
     if [ -n "$has_super" ]; then
         args="$args --capability=all"
-        cmd="SYSTEMD_SECCOMP=0 $cmd"
+
+        if [ -n "$has_d" ]; then
+            daemon="$daemon --setenv=SYSTEMD_SECCOMP=0"
+        else
+            cmd="SYSTEMD_SECCOMP=0 $cmd"
+        fi
     fi
 
     if [ -n "$has_xdg_dir" ]; then
@@ -126,6 +139,7 @@ execute() {
         args="$args $nvidia_list"
     fi
 
-    echo "Execute: $cmd $args"
-    sudo $SHELL -c "$cmd $args"
+    daemon="${daemon:+$daemon --}"
+    echo "Execute: $daemon $cmd $args"
+    sudo $SHELL -c "$daemon $cmd $args"
 }
