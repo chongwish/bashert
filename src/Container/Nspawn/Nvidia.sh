@@ -40,13 +40,13 @@ get_dev_list() {
 
 get_config_list() {
     echo '/usr/bin/nvidia-bug-report.sh:/usr/bin/nvidia-bug-report.sh'
-    echo '/opt/bin/nvidia-cuda-mps-control:/usr/bin/nvidia-cuda-mps-control'
-    echo '/opt/bin/nvidia-cuda-mps-server:/usr/bin/nvidia-cuda-mps-server'
-    echo '/opt/bin/nvidia-debugdump:/usr/bin/nvidia-debugdump'
+    echo '/usr/bin/nvidia-cuda-mps-control:/usr/bin/nvidia-cuda-mps-control'
+    echo '/usr/bin/nvidia-cuda-mps-server:/usr/bin/nvidia-cuda-mps-server'
+    echo '/usr/bin/nvidia-debugdump:/usr/bin/nvidia-debugdump'
     echo '/usr/bin/nvidia-modprobe:/usr/bin/nvidia-modprobe'
-    echo '/opt/bin/nvidia-ngx-updater:/usr/bin/nvidia-ngx-updater'
+    echo '/usr/bin/nvidia-ngx-updater:/usr/bin/nvidia-ngx-updater'
     echo '/usr/bin/nvidia-sleep.sh:/usr/bin/nvidia-sleep.sh'
-    echo '/opt/bin/nvidia-smi:/usr/bin/nvidia-smi'
+    echo '/usr/bin/nvidia-smi:/usr/bin/nvidia-smi'
     echo '/usr/bin/nvidia-xconfig:/usr/bin/nvidia-xconfig'
     echo '/etc/modprobe.d/nvidia.conf:/usr/lib/x86_64-linux-gnu/modprobe.d/nvidia-utils.conf'
     echo '/usr/lib64/xorg/modules/drivers/nvidia_drv.so:/usr/lib/x86_64-linux-gnu/xorg/modules/drivers/nvidia_drv.so'
